@@ -167,7 +167,7 @@ ltr<-kd2 %>%
   rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
 ```
 
-#### `r name_filter` (NPI: `r params$npi`)
+<!-- #### `r name_filter` (NPI: `r params$npi`) -->
 
 ```{r}
 #| echo: false
@@ -199,6 +199,8 @@ The table lists the top ten survey questions, sorted in order of priority, that 
 **Notes:**
 
 -   This summarizes the results of ***`r ltr[,4]`*** surveys received between ***`r min(data$newdate)`*** and ***`r max(data$newdate)`***.
+
+-   The sample count of ***`r ltr[,4]`*** surveys `r (if(ltr[,4] > 29 ) {print("fulfills")} else if (ltr[,4] < 30) {print("fails to fulfill")})` the minimum sample size requirements.
 
 -   The percentile rank is an internal rank that compares all physicians within the service line. For example, a percentile rank of 90 means the score is in the top 10 percent of all physicians.
 
