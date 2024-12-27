@@ -167,7 +167,7 @@ ltr<-kd2 %>%
   rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
 ```
 
-#### `r name_filter` (NPI: `r params$npi`)
+<!-- #### `r name_filter` (NPI: `r params$npi`) -->
 
 ```{r}
 #| echo: false
