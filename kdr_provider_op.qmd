@@ -167,7 +167,7 @@ ltr<-kd2 %>%
   rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
 ```
 
-#### `r name_filter` (NPI: `r params$npi`)
+<!-- #### `r name_filter` (NPI: `r params$npi`) -->
 
 ```{r}
 #| echo: false
@@ -200,12 +200,12 @@ The table lists the top ten survey questions, sorted in order of priority, that 
 
 -   This summarizes the results of ***`r ltr[,4]`*** surveys received between ***`r min(data$newdate)`*** and ***`r max(data$newdate)`***.
 
--   The percentile rank is an internal rank that compares all physicians within the service line. For example, a percentile rank of 90 means the score is in the top 10 percent of all physicians.
+-   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. For example, a percentile rank of 90 means the score is in the top 10 percent of all physicians.
 
--   The correlation measures the strength of the linear association between the response to the institutional measure and the question of interest. The survey count of `r ltr[,4]` *`r (if(ltr[,4] > 29 ) {print("meets")} else if (ltr[,4] < 30) {print("fails to meet")})`* the minimum number of surveys required to come to a *statistically sound conclusion.*
+-   The [correlation]{.underline} measures the strength of the linear association between the response to the institutional measure and the question of interest. The `r ltr[,4]` surveys analyzed **`r (if(ltr[,4] == 30) {"meets"} else if (ltr[,4] < 30) {"is less than"} else {"exceeds"})`** the minimum number of surveys (30) required to come to a **statistically sound** conclusion regarding the correlation.
 
--   The top box ratio calculates the likelihood of giving the top box score for the institutional measure, given the score is a top box for the question of interest.
+-   The [top box ratio]{.underline} calculates the likelihood of giving the top box score for the institutional measure, given the score is a top box for the question of interest.
 
--   The driver index sorts the combined correlation and top box ratio scores.
+-   The [driver index]{.underline} sorts the combined correlation and top box ratio scores.
 
--   The priority order is determined by combining the driver index and the percentile rank.
+-   The [priority order]{.underline} is determined by combining the driver index and the percentile rank.
