@@ -1,11 +1,13 @@
 ---
-title: "Key Driver Summary (Physician)"
+title: "KEY DRIVER SUMMARY - PHYSICIAN" 
 format: html
-editor: visual
+theme: united
+source: visual
+
 params:
   type : "Physician"
   service_line : "ON"
-  npi : "1598290868"
+  npi : "1588951560"
 ---
 
 ```{r}
@@ -167,7 +169,15 @@ ltr<-kd2 %>%
   rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
 ```
 
-<!-- #### `r name_filter` (NPI: `r params$npi`) -->
+#### `r name_filter` (`r params$npi`)
+
+
+------------------------------------------------------------------------
+
+<!--  *** inserts a horizontal line -->
+
+[This table lists the top ten survey questions, sorted in order of priority, that drive the respondents' top box score for the Institutional Measure: ***"`r ltr[,1]`"***]{.important}
+
 
 ```{r}
 #| echo: false
@@ -183,24 +193,35 @@ ltr2<-ltr %>%
 
 total<-rbind(ltr2,kdr)
 
+n <- ltr[,4]
+
 total%>%
   gt()%>%
-  cols_align(align="center",columns = everything())%>%
-  tab_options(column_labels.background.color = 'dodgerblue4')%>%
-  cols_align(align = "left",columns = Question)%>%
+  cols_align(align="center",columns = everything()) %>%
+  tab_options(
+    table.font.size = px(14L),
+    column_labels.font.size = px(14L),
+    column_labels.background.color = 'dodgerblue4') %>%
+  # tab_footnote(
+  #   footnote = ltr[,4] Received dates from  "
+  # )
+  cols_align(align = "left",columns = Question) %>%
   tab_style(style=cell_text(align="center"), 
             locations = cells_column_labels(columns = everything())
             )
 
+
 ```
 
-The table lists the top ten survey questions, sorted in order of priority, that drive the respondents' top box score for the Institutional Measure: ***`r ltr[,1]`*** .
+{{< pagebreak >}} 
 
 **Notes:**
 
--   This summarizes the results of ***`r ltr[,4]`*** surveys received between ***`r min(data$newdate)`*** and ***`r max(data$newdate)`***.
+-   ***`r ltr[,4]`***  Press Ganey Patient Satisfaction surveys 
 
--   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. For example, a percentile rank of 90 means the score is in the top 10 percent of all physicians.
+-   Received dates from ***`r min(data$newdate)`*** to ***`r max(data$newdate)`***.
+
+-   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. For example, a percentile rank of 90 means the score is better than 90% of all physicians' scores within Moffitt.
 
 -   The [correlation]{.underline} measures the strength of the linear association between the response to the institutional measure and the question of interest. The `r ltr[,4]` surveys analyzed **`r (if(ltr[,4] == 30) {"meets"} else if (ltr[,4] < 30) {"is less than"} else {"exceeds"})`** the minimum number of surveys (30) required to come to a **statistically sound** conclusion regarding the correlation.
 
