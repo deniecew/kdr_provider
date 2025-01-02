@@ -1,6 +1,6 @@
 ---
 title: 
-  "KEY DRIVER SUMMARY - PHYSICIAN" 
+  "TOP BOX SCORE & PERCENTILE RANK - PHYSICIAN" 
 format: html
 theme: sandstone
 source: visual
@@ -8,7 +8,7 @@ source: visual
 params:
   type : "Physician"
   service_line : "ON"
-  npi : "1427066687"
+  npi : "1164727673"
 ---
 
 ```{r}
@@ -163,7 +163,12 @@ ltr <- indiv_rank %>%
 
 <!--  *** inserts a horizontal line -->
 
-[This table lists the top ten survey questions, sorted in order of priority, that drive the respondents' top box score for the Institutional Measure: ***"`r ltr[,1]`"***]{.important}
+<!-- [The top box score is 100 for the Institutional Measure:\ -->
+<!-- ***"`r ltr[,1]`"***.\ -->
+<!-- \ -->
+[The table below presents the top box scores and the corresponding percentile rank for all questions on the survey.\
+\
+The questions are sorted from highest to lowest top box score.]{.important}
 
 ```{r}
 #| echo: false
@@ -196,10 +201,10 @@ total%>%
 
 ```
 
-{{< pagebreak >}}
+<!-- {{< pagebreak >}} -->
 
 **Notes:**
 
 -   The data was collected from ***`r ltr[,2]`***  surveys received from ***`r min(data$newdate)`*** to ***`r max(data$newdate)`***.
 
--   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. For example, a percentile rank of 90 means the score is better than 90% of all physicians' scores within Moffitt.
+-   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. It is calculated by counting the number of scores less than the physician's top box score (x) and dividing by the number of top box scores (n). A percentile rank of 90 means the score is better than 90% of all physicians' scores within Moffitt.

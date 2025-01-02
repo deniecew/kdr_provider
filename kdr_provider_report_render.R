@@ -82,7 +82,7 @@ perfectltr <- data%>%
 
 r<- nrow(perfectltr)
 
-npis3 <- smallsamples %>%
+npis3 <- perfectltr %>%
   pull(npi) %>%
   as.character()
 
@@ -92,7 +92,7 @@ names3 <- perfectltr %>%
 
 reports_03<-
   tibble(
-    input="perfectltr.qmd",
+    input="perfect_ltr.qmd",
     output_file = str_glue("{names3}.html"),
     execute_params=map(npis3,~list(npi=.))
   )

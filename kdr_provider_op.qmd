@@ -8,7 +8,7 @@ source: visual
 params:
   type : "Physician"
   service_line : "ON"
-  npi : "1588951560"
+  npi : "1932631637"
 ---
 
 
@@ -61,8 +61,9 @@ outvar_all<-c("MED7","O2","O3","O7") #Outpatient Oncology
 data$newdate<- mdy(data$date)
 
 data<-data%>%
-  filter(provider_type == params$type)%>%
-  filter(!varname %in% c( "CT2", "CT5", "I69", "Q8845_02", "T19", "T2", ""))
+  filter(provider_type == params$type) %>%
+  # filter(!varname %in% c( "I69"))
+  filter(!varname %in% c("CT2", "CT5", "I69", "Q8845_02", "T19", "T2", ""))
 
 name_filter<-data %>%
   filter(npi == params$npi) %>%
@@ -81,6 +82,8 @@ tmp1<-r[-1,outvar,drop=FALSE] #drop the survey id, select outvar column & conver
 tmp1<-as.data.frame(tmp1)
 tmp1$varname <- rownames(tmp1)
 colnames(tmp1)[1] = "corr"
+tmp1 <- tmp1 %>%
+  filter(corr != "NA")
 
 
 #Top Box Ratios
@@ -178,7 +181,15 @@ ltr<-kd2 %>%
 
 <!--  *** inserts a horizontal line -->
 
-[This table lists the top ten survey questions, sorted in order of priority, that drive the respondents' top box score for the Institutional Measure: ***"`r ltr[,1]`"***]{.important}
+[This table lists the top ten survey questions, sorted in order of priority, that drive the respondents' top box score for the Physician Incentive measure:]{.important} 
+
+<center> 
+
+***"`r ltr[,1]`"***
+
+</center> 
+
+
 
 ```{r}
 #| echo: false
@@ -203,7 +214,11 @@ total%>%
   tab_options(
     table.font.size = px(14L),
     column_labels.font.size = px(15L),
-    column_labels.background.color = 'dodgerblue4') %>%
+    column_labels.font.weight = "bold",
+    # column_labels.background.color = '#002f6c') %>% #Moffitt Deep Blue
+    column_labels.background.color = '#a4dbe8') %>% #Moffitt Light Blue
+  # cols_width(
+  #   starts_with("Question") ~ px(500)) %>%
   cols_align(
     align = "left",
     columns = Question) %>%
@@ -221,11 +236,11 @@ total%>%
 
 -   The data was collected from ***`r ltr[,4]`***  surveys received from ***`r min(data$newdate)`*** to ***`r max(data$newdate)`***.
 
--   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. For example, a percentile rank of 90 means the score is better than 90% of all physicians' scores within Moffitt.
+-   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. It is calculated by counting the number of scores less than the physician's top box score (x) and dividing by the number of top box scores (n). A percentile rank of 90 means the score is better than 90% of all physicians' scores within Moffitt.
 
--   The [correlation]{.underline} measures the strength of the linear association between the response to the institutional measure and the question of interest. The `r ltr[,4]` surveys analyzed **`r (if(ltr[,4] == 30) {"meets"} else if (ltr[,4] < 30) {"is less than"} else {"exceeds"})`** the minimum number of surveys (30) required to come to a **statistically sound** conclusion regarding the correlation.
+-   The [correlation]{.underline} measures the strength of the linear association between the response to the Physician Incentive measure and the question of interest. The `r ltr[,4]` surveys analyzed **`r (if(ltr[,4] == 30) {"meets"} else if (ltr[,4] < 30) {"is less than"} else {"exceeds"})`** the minimum number of surveys (30) required to come to a **statistically sound** conclusion regarding the correlation.
 
--   The [top box ratio]{.underline} calculates the likelihood of giving the top box score for the institutional measure, given the score is a top box for the question of interest.
+-   The [top box ratio]{.underline} calculates the likelihood of giving the top box score for the Physician Incentive measure, given the score is a top box for the question of interest.
 
 -   The [driver index]{.underline} sorts the combined correlation and top box ratio scores.
 
