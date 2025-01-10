@@ -30,12 +30,14 @@ library(tinytex)
 
 
 # #clean raw data
-# data<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/OP_Provider022024-102024.csv")
+# data<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/kdr_physician_072024-122024.csv")
 # 
 # data<-data%>%
 #   clean_names()%>%
-#   rename(name=provider_nm, program=program_nm,practice = practice_summary,
-#          date=recdate_day,question=question_text_latest, top_box=top_box_score)
+#   rename(name = provider_nm,
+#          date = recdate_day,
+#          question = question_text_latest,
+#          top_box = top_box_score)
 # 
 # data$npi<-as.character(data$npi)
 # 
