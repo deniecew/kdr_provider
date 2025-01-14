@@ -92,7 +92,7 @@ names3 <- perfectltr %>%
 
 reports_03<-
   tibble(
-    input="perfect_ltr.qmd",
+    input="kdr_provider_perfectltr.qmd",
     output_file = str_glue("{names3}.html"),
     execute_params=map(npis3,~list(npi=.))
   )
