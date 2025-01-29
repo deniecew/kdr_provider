@@ -1,0 +1,423 @@
+
+---
+title: 
+  "TOP BOX SCORE & PERCENTILE RANK - PHYSICIAN" 
+format: html
+theme: sandstone
+source: visual
+
+params:
+  type : "Physician"
+  service_line : "ON"
+  npi : "1164727673"
+---
+
+```{r}
+#| echo: false
+#| warning: false 
+#load packages----
+library(tidyverse)
+library(janitor)
+library(dplyr)
+library(here)
+library(Hmisc)
+library(magrittr)
+library(kableExtra)
+library(janitor)
+library(gt)
+library(tinytex)
+
+
+# #clean raw data
+# data<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/OP_Provider022024-102024.csv")
+# 
+# data<-data%>%
+#   clean_names()%>%
+#   rename(name=provider_nm, program=program_nm,practice = practice_summary,
+#          date=recdate_day,question=question_text_latest, top_box=top_box_score)
+# 
+# data$npi<-as.character(data$npi)
+# 
+# 
+# save(data,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/provider_data.Rdata")
+# 
+# questions<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/OP_questions.csv")
+# 
+# questions<-questions%>%
+#   clean_names()
+# 
+# save(questions,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/op_question.Rdata")
+
+
+load("G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/provider_data.Rdata")
+load("G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/op_question.Rdata")
+
+
+##set data parameters: service line, clinic, outcome variable(s)----
+outvar<-"O7"  #LTR Provider
+outvar_all<-c("MED7","O2","O3","O7") #Outpatient Oncology
+
+data$newdate<- mdy(data$date)
+
+data<-data%>%
+  filter(provider_type == params$type)%>%
+  filter(!varname %in% c( "CT2", "CT5", "I69", "Q8845_02", "T19", "T2", ""))
+
+name_filter<-data %>%
+  filter(npi == params$npi) %>%
+  distinct(name)
+ 
+  #remove certain variables
+
+# #Correlations
+# r<-data%>%
+#   filter(npi == params$npi) %>%
+#   select(survey_id,varname,value)%>% #use only mean column's data
+#   spread(varname,value)%>% #convert from long to wide format
+#   cor(use='pairwise.complete.obs')
+# 
+# tmp1<-r[-1,outvar,drop=FALSE] #drop the survey id, select outvar column & convert to data frame
+# tmp1<-as.data.frame(tmp1)
+# tmp1$varname <- rownames(tmp1)
+# colnames(tmp1)[1] = "corr"
+
+
+# #Top Box Ratios
+# #Step 1. convert clinic level data to wide data set nrows = survey count
+# tbwide<-data%>%
+#   filter(npi == params$npi) %>%
+#   select(survey_id,varname,top_box) %>% #use only topbox data
+#   spread(varname,top_box) %>% #convert from long to wide format
+#   select(-c(survey_id))
+# 
+# # test<-addmargins(xtabs(~O7+O7,tbwide))
+# # test
+# 
+# #Step 2. create functions to create table(x) and calculate tbratio(y)
+# tbratio<-function(data,var){
+#   x<-addmargins(xtabs(~data[,var]+data[,outvar],data))
+#   y<-((x[2,2]+0.5)/(x[2,3]+1))/((x[1,2]+0.5)/(x[1,3]+1)) 
+#   return(y)
+# }
+# 
+# #calculate tbratio across all variables & store as data frame
+# tmp2<-data.frame()
+# for (i in 1:dim(tbwide)[2]){ 
+#   m<-tbratio(tbwide,i)
+#   tmp2[i,1] <- colnames(tbwide)[i]
+#   tmp2[i,2] <- m
+# }
+# 
+# colnames(tmp2)<-c('varname','ratio')
+
+#Percentile Rank
+indiv_rank<-data %>%
+  select(survey_id,npi,provider_type,varname,top_box) %>% #subset original data set
+  group_by(npi,varname) %>%
+  summarise(tbscore=sum(top_box)/n()*100,n=n()) %>% #calculate topbox
+  #filter(n>29) %>%  #remove small samples
+  group_by(varname) %>%
+  mutate(percent_rank=100*(rank(tbscore)/length(tbscore))) %>%
+  filter(npi == params$npi)
+
+indiv_rank <- merge(indiv_rank,questions,by="varname") 
+
+# takeout <- subset(indiv_rank, !(varname %in% outvar_all))
+
+kdr<- indiv_rank %>%
+  subset(!(varname %in% outvar_all)) %>%
+  # top_n(10,tbscore) %>%
+  arrange(desc(tbscore)) %>%
+  select(question_text_latest,tbscore,percent_rank) %>%
+  # mutate(across(c(corr,ratio),round, 2) )%>%
+  mutate(tbscore=round(tbscore,1)) %>%
+  mutate(percent_rank=round(percent_rank,0)) %>%
+  # mutate(across(c(driver_index,percent_rank),round)) %>%
+  mutate(tbscore_rank=paste(tbscore," (",percent_rank,")")) %>%
+  select(-c(tbscore,percent_rank)) %>%
+  rename('Question' = question_text_latest) %>%
+  # rename('Linear Correlation' = corr) %>%
+  # rename('Top-Box Ratio' = ratio) %>%
+  # rename('Driver Index' = driver_index) %>%
+  rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
+  
+# kdr <- rowid_to_column(kdr)
+
+# kdr <- kdr %>%
+#   rename('Priority'=rowid)
+
+ltr <- indiv_rank %>%
+  filter(varname==outvar) %>%
+  select(question_text_latest,tbscore,percent_rank,n) %>%
+  mutate(percent_rank=round(percent_rank,0)) %>%
+  mutate(tbscore=round(tbscore,1)) %>%
+  mutate(tbscore_rank=paste(tbscore," (",percent_rank,")")) %>%
+  select(-c(tbscore,percent_rank)) %>%
+  rename('Question' = question_text_latest) %>%
+  rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
+
+```
+
+#### `r name_filter` (`r params$npi`)
+
+------------------------------------------------------------------------
+
+<!--  *** inserts a horizontal line -->
+
+<!-- [The top box score is 100 for the Institutional Measure:\ -->
+<!-- ***"`r ltr[,1]`"***.\ -->
+<!-- \ -->
+[The table below presents the top box scores and the corresponding percentile rank for all questions on the survey.\
+\
+The questions are sorted from highest to lowest top box score.]{.important}
+
+```{r}
+#| echo: false
+#| warning: false
+
+ltr2 <- ltr %>%
+  select("Question", "Top-Box Score (Percentile Rank)")
+
+
+total<-rbind(ltr2,kdr)
+
+ n <- ltr[,2]
+
+total%>%
+  gt()%>%
+  cols_align(align="center",
+             columns = everything()) %>%
+  tab_options(
+    table.font.size = px(14L),
+    column_labels.font.size = px(15L),
+    column_labels.background.color = 'dodgerblue4') %>%
+  cols_align(
+    align = "left",
+    columns = Question) %>%
+  tab_style(
+    style=cell_text(align="center"),
+    locations = cells_column_labels(columns = everything())
+            )
+
+
+```
+
+<!-- {{< pagebreak >}} -->
+
+**Notes:**
+
+-   The data was collected from ***`r ltr[,2]`***  surveys received from ***`r min(data$newdate)`*** to ***`r max(data$newdate)`***.
+
+-   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. It is calculated by counting the number of scores less than the physician's top box score (x) and dividing by the number of top box scores (n). A percentile rank of 90 means the score is better than 90% of all physicians' scores within Moffitt.
+=======
+---
+title: 
+  "TOP BOX SCORE & PERCENTILE RANK - PHYSICIAN" 
+format: html
+theme: sandstone
+source: visual
+
+params:
+  type : "Physician"
+  service_line : "ON"
+  npi : "1164727673"
+---
+
+```{r}
+#| echo: false
+#| warning: false 
+#load packages----
+library(tidyverse)
+library(janitor)
+library(dplyr)
+library(here)
+library(Hmisc)
+library(magrittr)
+library(kableExtra)
+library(janitor)
+library(gt)
+library(tinytex)
+
+
+# #clean raw data
+# data<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/OP_Provider022024-102024.csv")
+# 
+# data<-data%>%
+#   clean_names()%>%
+#   rename(name=provider_nm, program=program_nm,practice = practice_summary,
+#          date=recdate_day,question=question_text_latest, top_box=top_box_score)
+# 
+# data$npi<-as.character(data$npi)
+# 
+# 
+# save(data,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/provider_data.Rdata")
+# 
+# questions<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/OP_questions.csv")
+# 
+# questions<-questions%>%
+#   clean_names()
+# 
+# save(questions,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/op_question.Rdata")
+
+
+load("G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/provider_data.Rdata")
+load("G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/op_question.Rdata")
+
+
+##set data parameters: service line, clinic, outcome variable(s)----
+outvar<-"O7"  #LTR Provider
+outvar_all<-c("MED7","O2","O3","O7") #Outpatient Oncology
+
+data$newdate<- mdy(data$date)
+
+data<-data%>%
+  filter(provider_type == params$type)%>%
+  filter(!varname %in% c( "CT2", "CT5", "I69", "Q8845_02", "T19", "T2", ""))
+
+name_filter<-data %>%
+  filter(npi == params$npi) %>%
+  distinct(name)
+ 
+  #remove certain variables
+
+# #Correlations
+# r<-data%>%
+#   filter(npi == params$npi) %>%
+#   select(survey_id,varname,value)%>% #use only mean column's data
+#   spread(varname,value)%>% #convert from long to wide format
+#   cor(use='pairwise.complete.obs')
+# 
+# tmp1<-r[-1,outvar,drop=FALSE] #drop the survey id, select outvar column & convert to data frame
+# tmp1<-as.data.frame(tmp1)
+# tmp1$varname <- rownames(tmp1)
+# colnames(tmp1)[1] = "corr"
+
+
+# #Top Box Ratios
+# #Step 1. convert clinic level data to wide data set nrows = survey count
+# tbwide<-data%>%
+#   filter(npi == params$npi) %>%
+#   select(survey_id,varname,top_box) %>% #use only topbox data
+#   spread(varname,top_box) %>% #convert from long to wide format
+#   select(-c(survey_id))
+# 
+# # test<-addmargins(xtabs(~O7+O7,tbwide))
+# # test
+# 
+# #Step 2. create functions to create table(x) and calculate tbratio(y)
+# tbratio<-function(data,var){
+#   x<-addmargins(xtabs(~data[,var]+data[,outvar],data))
+#   y<-((x[2,2]+0.5)/(x[2,3]+1))/((x[1,2]+0.5)/(x[1,3]+1)) 
+#   return(y)
+# }
+# 
+# #calculate tbratio across all variables & store as data frame
+# tmp2<-data.frame()
+# for (i in 1:dim(tbwide)[2]){ 
+#   m<-tbratio(tbwide,i)
+#   tmp2[i,1] <- colnames(tbwide)[i]
+#   tmp2[i,2] <- m
+# }
+# 
+# colnames(tmp2)<-c('varname','ratio')
+
+#Percentile Rank
+indiv_rank<-data %>%
+  select(survey_id,npi,provider_type,varname,top_box) %>% #subset original data set
+  group_by(npi,varname) %>%
+  summarise(tbscore=sum(top_box)/n()*100,n=n()) %>% #calculate topbox
+  #filter(n>29) %>%  #remove small samples
+  group_by(varname) %>%
+  mutate(percent_rank=100*(rank(tbscore)/length(tbscore))) %>%
+  filter(npi == params$npi)
+
+indiv_rank <- merge(indiv_rank,questions,by="varname") 
+
+# takeout <- subset(indiv_rank, !(varname %in% outvar_all))
+
+kdr<- indiv_rank %>%
+  subset(!(varname %in% outvar_all)) %>%
+  # top_n(10,tbscore) %>%
+  arrange(desc(tbscore)) %>%
+  select(question_text_latest,tbscore,percent_rank) %>%
+  # mutate(across(c(corr,ratio),round, 2) )%>%
+  mutate(tbscore=round(tbscore,1)) %>%
+  mutate(percent_rank=round(percent_rank,0)) %>%
+  # mutate(across(c(driver_index,percent_rank),round)) %>%
+  mutate(tbscore_rank=paste(tbscore," (",percent_rank,")")) %>%
+  select(-c(tbscore,percent_rank)) %>%
+  rename('Question' = question_text_latest) %>%
+  # rename('Linear Correlation' = corr) %>%
+  # rename('Top-Box Ratio' = ratio) %>%
+  # rename('Driver Index' = driver_index) %>%
+  rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
+  
+# kdr <- rowid_to_column(kdr)
+
+# kdr <- kdr %>%
+#   rename('Priority'=rowid)
+
+ltr <- indiv_rank %>%
+  filter(varname==outvar) %>%
+  select(question_text_latest,tbscore,percent_rank,n) %>%
+  mutate(percent_rank=round(percent_rank,0)) %>%
+  mutate(tbscore=round(tbscore,1)) %>%
+  mutate(tbscore_rank=paste(tbscore," (",percent_rank,")")) %>%
+  select(-c(tbscore,percent_rank)) %>%
+  rename('Question' = question_text_latest) %>%
+  rename('Top-Box Score (Percentile Rank)' = tbscore_rank)
+
+```
+
+#### `r name_filter` (`r params$npi`)
+
+------------------------------------------------------------------------
+
+<!--  *** inserts a horizontal line -->
+
+<!-- [The top box score is 100 for the Institutional Measure:\ -->
+<!-- ***"`r ltr[,1]`"***.\ -->
+<!-- \ -->
+[The table below presents the top box scores and the corresponding percentile rank for all questions on the survey.\
+\
+The questions are sorted from highest to lowest top box score.]{.important}
+
+```{r}
+#| echo: false
+#| warning: false
+
+ltr2 <- ltr %>%
+  select("Question", "Top-Box Score (Percentile Rank)")
+
+
+total<-rbind(ltr2,kdr)
+
+ n <- ltr[,2]
+
+total%>%
+  gt()%>%
+  cols_align(align="center",
+             columns = everything()) %>%
+  tab_options(
+    table.font.size = px(14L),
+    column_labels.font.size = px(15L),
+    column_labels.background.color = 'dodgerblue4') %>%
+  cols_align(
+    align = "left",
+    columns = Question) %>%
+  tab_style(
+    style=cell_text(align="center"),
+    locations = cells_column_labels(columns = everything())
+            )
+
+
+```
+
+<!-- {{< pagebreak >}} -->
+
+**Notes:**
+
+-   The data was collected from ***`r ltr[,2]`***  surveys received from ***`r min(data$newdate)`*** to ***`r max(data$newdate)`***.
+
+-   The [percentile rank]{.underline} is an internal rank that compares all physicians within the service line. It is calculated by counting the number of scores less than the physician's top box score (x) and dividing by the number of top box scores (n). A percentile rank of 90 means the score is better than 90% of all physicians' scores within Moffitt.
+>>>>>>> f6c6f089cfad4679026362279a1810e9efc3a34b
