@@ -21,7 +21,7 @@ params:
 library(tidyverse)
 library(janitor)
 library(dplyr)
-library(here)
+library(readxl)
 library(Hmisc)
 library(magrittr)
 library(kableExtra)
@@ -30,27 +30,42 @@ library(gt)
 library(tinytex)
 
 
-# #clean raw data
-# data<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/kdr_physician_072024-122024.csv")
-# 
-# data<-data%>%
-#   clean_names()%>%
-#   rename(name = provider_nm,
-#          date = recdate_day,
-#          question = question_text_latest,
-#          top_box = top_box_score)
-# 
-# data$npi<-as.character(data$npi)
-# 
-# 
-# save(data,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/provider_data.Rdata")
-# 
-# questions<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/OP_questions.csv")
-# 
-# questions<-questions%>%
-#   clean_names()
-# 
-# save(questions,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/op_question.Rdata")
+#clean raw data
+
+jul24 <- read_excel("C:/Users/4477078/OneDrive - Moffitt Cancer Center/Key Drivers/kdr_provider/data/kdr_physician_jul2024.xlsx")
+aug24 <- read_excel("C:/Users/4477078/OneDrive - Moffitt Cancer Center/Key Drivers/kdr_provider/data/kdr_physician_aug2024.xlsx")
+sep24 <- read_excel("C:/Users/4477078/OneDrive - Moffitt Cancer Center/Key Drivers/kdr_provider/data/kdr_physician_sep2024.xlsx")
+oct24 <- read_excel("C:/Users/4477078/OneDrive - Moffitt Cancer Center/Key Drivers/kdr_provider/data/kdr_physician_oct2024.xlsx")
+nov24 <- read_excel("C:/Users/4477078/OneDrive - Moffitt Cancer Center/Key Drivers/kdr_provider/data/kdr_physician_nov2024.xlsx")
+dec24 <- read_excel("C:/Users/4477078/OneDrive - Moffitt Cancer Center/Key Drivers/kdr_provider/data/kdr_physician_dec2024.xlsx")
+jan25 <- read_excel("C:/Users/4477078/OneDrive - Moffitt Cancer Center/Key Drivers/kdr_provider/data/kdr_physician_jan2025.xlsx")
+
+##combine rows of data tables
+
+physician_data<-rbind(jul24, aug24, sep24, oct24, nov24, dec24, jan25)
+
+data<-physician_data %>%
+  clean_names() %>%
+  filter(service == "ON") %>%
+  as.data.frame() %>%
+  rename(name = provider_nm,
+         date = recdate_day,
+         question = question_text_latest,
+         top_box = top_box_ind) %>%
+  mutate(recdate = as.Date(recdate)) %>%
+  mutate(response = as.numeric(response))
+
+data$npi<-as.character(data$npi)
+
+
+save(data,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/physician_data_jul-jan.Rdata")
+
+questions<-read.csv(file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/OP_questions.csv")
+
+questions<-questions%>%
+  clean_names()
+
+save(questions,file="G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/op_question.Rdata")
 
 
 load("G:/Press Ganey II/Reports/Ad Hoc/DEEP DIVE/Key Driver Reports/data/provider_data.Rdata")
